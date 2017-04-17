@@ -143,12 +143,12 @@ namespace Microsoft.AspNet.SignalR.Transports
                 return _context.Response.End(Resources.Error_NotWebSocketRequest);
             }
 
-            Action<IWebSocket> prepareWebSocket = socket => {
+            void prepareWebSocket(IWebSocket socket) {
                 _socket = socket;
                 socket.OnClose = _closed;
                 socket.OnMessage = _message;
                 socket.OnError = _error;
-            };
+            }
 
             var handler = new OwinWebSocketHandler(callback, prepareWebSocket, _maxIncomingMessageSize);
             accept(null, handler.ProcessRequest);
