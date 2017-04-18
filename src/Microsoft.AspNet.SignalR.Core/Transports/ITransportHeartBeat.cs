@@ -36,5 +36,9 @@ namespace Microsoft.AspNet.SignalR.Transports
         /// <returns>A list of connections.</returns>
         [SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate", Justification = "This might be expensive.")]
         IList<ITrackingConnection> GetConnections();
+
+        int GetConnectionCount();
+
+        int GetAliveConnectionCount();
     }
 }

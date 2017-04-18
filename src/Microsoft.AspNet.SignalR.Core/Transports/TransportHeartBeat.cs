@@ -358,5 +358,15 @@ namespace Microsoft.AspNet.SignalR.Transports
             // The initial connection time of the connection
             public DateTime Initial { get; set; }
         }
+
+        public int GetConnectionCount()
+        {
+            return _connections.Count;
+        }
+
+        public int GetAliveConnectionCount()
+        {
+            return _connections.Count(x => x.Value.Connection.IsAlive);
+        }
     }
 }
