@@ -273,6 +273,7 @@
     <Compile Include="Hubs\IJavaScriptMinifier.cs" />
     <Compile Include="Infrastructure\SafeSet.cs" />
     <Compile Include="Tracing\TraceSourceExtensions.cs" />
+    <Compile Include="Transports\SignalRTransport.cs" />
     <Compile Include="Transports\TransportConnectionExtensions.cs" />
     <Compile Include="Transports\ITransportConnection.cs" />
     <Compile Include="Json\JsonUtility.cs" />

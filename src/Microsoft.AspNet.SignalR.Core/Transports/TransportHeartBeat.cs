@@ -20,6 +20,7 @@ namespace Microsoft.AspNet.SignalR.Transports
     public class TransportHeartbeat : ITransportHeartbeat, IDisposable
     {
         private readonly ConcurrentDictionary<string, ConnectionMetadata> _connections = new ConcurrentDictionary<string, ConnectionMetadata>();
+        private readonly int[] _transportCounts = new int[5];
         private readonly Timer _timer;
         private readonly IConfigurationManager _configurationManager;
         private readonly TraceSource _trace;
@@ -56,6 +57,27 @@ namespace Microsoft.AspNet.SignalR.Transports
             }
         }
 
+        private SignalRTransport GetConnectionType(ITrackingConnection connection)
+        {
+            if (connection is WebSocketTransport)
+            {
+                return SignalRTransport.WebSockets;
+            }
+            else if (connection is LongPollingTransport)
+            {
+                return SignalRTransport.LongPolling;
+            }
+            else if (connection is ServerSentEventsTransport)
+            {
+                return SignalRTransport.ServerSentEvents;
+            }
+            else if (connection is ForeverFrameTransport)
+            {
+                return SignalRTransport.ForeverFrame;
+            }
+            return SignalRTransport.Unknown;
+        }
+
         /// <summary>
         /// Adds a new connection to the list of tracked connections.
         /// </summary>
@@ -71,11 +93,12 @@ namespace Microsoft.AspNet.SignalR.Transports
             bool isNewConnection = true;
             ITrackingConnection oldConnection = null;
 
-            _connections.AddOrUpdate(connection.ConnectionId, newMetadata, (key, old) =>
+            _connections.AddOrUpdate(connection.ConnectionId, newMetadata, updateValueFactory: (key, old) =>
             {
                 Trace.TraceEvent(TraceEventType.Verbose, 0, "Connection {0} exists. Closing previous connection.", old.Connection.ConnectionId);
                 // Kick out the older connection. This should only happen when 
                 // a previous connection attempt fails on the client side (e.g. transport fallback).
+                Interlocked.Decrement(ref _transportCounts[(int)GetConnectionType(old.Connection)]);
 
                 old.Connection.ApplyState(TransportConnectionStates.Replaced);
 
@@ -110,6 +133,8 @@ namespace Microsoft.AspNet.SignalR.Transports
 
             newMetadata.Connection.ApplyState(TransportConnectionStates.Added);
 
+            Interlocked.Increment(ref _transportCounts[(int)GetConnectionType(connection)]);
+
             return oldConnection;
         }
 
@@ -135,6 +160,8 @@ namespace Microsoft.AspNet.SignalR.Transports
                 }
 
                 connection.ApplyState(TransportConnectionStates.Removed);
+
+                Interlocked.Decrement(ref _transportCounts[(int)GetConnectionType(connection)]);
 
                 Trace.TraceInformation("Removing connection {0}", connection.ConnectionId);
             }
@@ -367,6 +394,11 @@ namespace Microsoft.AspNet.SignalR.Transports
         public int GetAliveConnectionCount()
         {
             return _connections.Count(x => x.Value.Connection.IsAlive);
+        }
+
+        public int[] GetTransportCounts()
+        {
+            return _transportCounts;
         }
     }
 }

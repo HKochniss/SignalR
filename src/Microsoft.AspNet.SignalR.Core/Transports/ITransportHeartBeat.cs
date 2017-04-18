@@ -40,5 +40,7 @@ namespace Microsoft.AspNet.SignalR.Transports
         int GetConnectionCount();
 
         int GetAliveConnectionCount();
+
+        int[] GetTransportCounts();
     }
 }
